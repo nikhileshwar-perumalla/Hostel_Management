@@ -42,7 +42,12 @@ mongoose.connect(mongoUri);
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', () => {
-  console.log('Connected to MongoDB');
+  try {
+    const info = mongoose.connection;
+    console.log(`Connected to MongoDB (db: ${info.name}, host: ${info.host})`);
+  } catch {
+    console.log('Connected to MongoDB');
+  }
 });
 
 // Routes
@@ -54,6 +59,14 @@ app.use('/api/allocations', allocationRoutes);
 // Health/landing route (works for API-only deploys)
 app.get('/', (req, res) => {
   res.json({ message: 'Hostel Management API is running!' });
+});
+
+// Health endpoint to check DB connectivity
+app.get('/healthz', (req, res) => {
+  // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+  const state = mongoose.connection.readyState;
+  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  res.json({ status: 'ok', db: states[state] || String(state) });
 });
 
 // If frontend build exists, serve it and enable SPA fallback
