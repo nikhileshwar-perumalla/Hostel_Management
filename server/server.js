@@ -14,16 +14,22 @@ dotenv.config();
 const app = express();
 
 // Middleware
+const renderUrl = process.env.RENDER_EXTERNAL_URL || process.env.RENDER_INTERNAL_HOSTNAME;
+const renderOrigin = renderUrl && (renderUrl.startsWith('http') ? renderUrl : `https://${renderUrl}`);
 const allowedOrigins = [
   process.env.FRONTEND_ORIGIN,
-  'https://hostel-management-1aq2w3yux-nikhils-projects-8f508638.vercel.app',
+  renderOrigin,
   'http://localhost:5173',
+  'http://localhost:5174',
 ].filter(Boolean);
+const allowedOriginPatterns = [/^https?:\/\/[a-z0-9-]+\.vercel\.app$/i];
 
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true); // allow non-browser clients
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowedOrigins.includes(origin) || allowedOriginPatterns.some((rx) => rx.test(origin))) {
+      return callback(null, true);
+    }
     return callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
