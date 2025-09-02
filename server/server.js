@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const roomRoutes = require('./routes/rooms');
 const allocationRoutes = require('./routes/allocations');
+const path = require('path');
 
 dotenv.config();
 
@@ -29,6 +30,14 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/allocations', allocationRoutes);
+
+// Serve static files from the dist directory
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Handle SPA routing
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../dist', 'index.html'));
+});
 
 app.get('/', (req, res) => {
   res.json({ message: 'Hostel Management API is running!' });
