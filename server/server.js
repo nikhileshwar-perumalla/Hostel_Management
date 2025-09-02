@@ -2,11 +2,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const fs = require('fs');
+const path = require('path');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const roomRoutes = require('./routes/rooms');
 const allocationRoutes = require('./routes/allocations');
-const path = require('path');
 
 dotenv.config();
 
@@ -50,17 +51,20 @@ app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/allocations', allocationRoutes);
 
-// Serve static files from the dist directory
-app.use(express.static(path.join(__dirname, '../dist')));
-
-// Handle SPA routing
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, '../dist', 'index.html'));
-});
-
+// Health/landing route (works for API-only deploys)
 app.get('/', (req, res) => {
   res.json({ message: 'Hostel Management API is running!' });
 });
+
+// If frontend build exists, serve it and enable SPA fallback
+const distPath = path.join(__dirname, '../dist');
+const indexPath = path.join(distPath, 'index.html');
+if (fs.existsSync(indexPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(indexPath);
+  });
+}
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
