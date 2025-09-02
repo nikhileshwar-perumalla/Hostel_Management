@@ -13,15 +13,30 @@ dotenv.config();
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  process.env.FRONTEND_ORIGIN,
+  'https://hostel-management-1aq2w3yux-nikhils-projects-8f508638.vercel.app',
+  'http://localhost:5173',
+].filter(Boolean);
+
 app.use(cors({
-  origin: 'https://hostel-management-1aq2w3yux-nikhils-projects-8f508638.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow non-browser clients
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
 }));
 app.use(express.json());
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hostel_management');
+const mongoUri = process.env.MONGODB_URI || (process.env.NODE_ENV === 'production' ? '' : 'mongodb://localhost:27017/hostel_management');
+if (!mongoUri) {
+  console.error('Missing MONGODB_URI environment variable in production');
+  process.exit(1);
+}
+mongoose.connect(mongoUri);
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));

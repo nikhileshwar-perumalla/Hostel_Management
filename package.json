@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+  "dev": "concurrently \"npm run server\" \"npm run client\"",
+  "start": "node server/server.js",
     "client": "vite",
     "server": "cd server && npm run dev",
     "build": "vite build",

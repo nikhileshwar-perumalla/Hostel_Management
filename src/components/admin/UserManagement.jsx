@@ -30,7 +30,7 @@ const UserManagement = () => {
       if (roleFilter) params.append('role', roleFilter);
       params.append('limit', '100');
 
-      const response = await axios.get(`http://localhost:5001/api/users?${params}`);
+  const response = await axios.get(`/api/users?${params}`);
       setUsers(response.data.users);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -43,9 +43,9 @@ const UserManagement = () => {
     e.preventDefault();
     try {
       if (editingUser) {
-        await axios.put(`http://localhost:5001/api/users/${editingUser._id}`, formData);
+  await axios.put(`/api/users/${editingUser._id}`, formData);
       } else {
-        await axios.post('http://localhost:5001/api/auth/register', {
+  await axios.post('/api/auth/register', {
           ...formData,
           password: 'defaultpassword123'
         });
@@ -62,7 +62,7 @@ const UserManagement = () => {
   const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await axios.delete(`http://localhost:5001/api/users/${userId}`);
+  await axios.delete(`/api/users/${userId}`);
         fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);

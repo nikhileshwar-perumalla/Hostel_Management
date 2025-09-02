@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await axios.get('http://localhost:5001/api/auth/me');
+          const response = await axios.get('/api/auth/me');
           setUser(response.data);
         } catch (error) {
           localStorage.removeItem('token');
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:5001/api/auth/login', {
+  const response = await axios.post('/api/auth/login', {
         email,
         password
       });
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post('http://localhost:5001/api/auth/register', userData);
+  const response = await axios.post('/api/auth/register', userData);
 
       const { token, user } = response.data;
       localStorage.setItem('token', token);

@@ -17,7 +17,7 @@ const StudentDashboard = () => {
 
   const fetchAllocation = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/allocations/my-allocation');
+  const response = await axios.get('/api/allocations/my-allocation');
       setAllocation(response.data);
     } catch (error) {
       if (error.response?.status !== 404) {
@@ -30,7 +30,7 @@ const StudentDashboard = () => {
 
   const fetchAvailableRooms = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/rooms?available=true&limit=50');
+  const response = await axios.get('/api/rooms?available=true&limit=50');
       setAvailableRooms(response.data.rooms);
     } catch (error) {
       console.error('Error fetching available rooms:', error);

@@ -33,7 +33,7 @@ const RoomManagement = () => {
       if (floorFilter) params.append('floor', floorFilter);
       params.append('limit', '100');
 
-      const response = await axios.get(`http://localhost:5001/api/rooms?${params}`);
+  const response = await axios.get(`/api/rooms?${params}`);
       let filteredRooms = response.data.rooms;
 
       if (searchTerm) {
@@ -61,9 +61,9 @@ const RoomManagement = () => {
       };
 
       if (editingRoom) {
-        await axios.put(`http://localhost:5001/api/rooms/${editingRoom._id}`, roomData);
+  await axios.put(`/api/rooms/${editingRoom._id}`, roomData);
       } else {
-        await axios.post('http://localhost:5001/api/rooms', roomData);
+  await axios.post('/api/rooms', roomData);
       }
       
       fetchRooms();

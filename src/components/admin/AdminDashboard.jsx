@@ -22,9 +22,9 @@ const AdminDashboard = () => {
   const fetchStats = async () => {
     try {
       const [usersRes, roomsRes, allocationsRes] = await Promise.all([
-        axios.get('http://localhost:5001/api/users?role=student&limit=1000'),
-        axios.get('http://localhost:5001/api/rooms?limit=1000'),
-        axios.get('http://localhost:5001/api/allocations?status=active&limit=1000')
+  axios.get('/api/users?role=student&limit=1000'),
+  axios.get('/api/rooms?limit=1000'),
+  axios.get('/api/allocations?status=active&limit=1000')
       ]);
 
       const totalRevenue = allocationsRes.data.allocations.reduce(
