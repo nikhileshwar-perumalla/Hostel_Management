@@ -16,7 +16,7 @@ router.get('/', adminAuth, async (req, res) => {
 
     const allocations = await Allocation.find(query)
       .populate('student', 'name studentId email')
-      .populate('room', 'roomNumber floor roomType')
+  .populate('room', 'roomNumber floor roomType capacity currentOccupancy')
       .populate('allocatedBy', 'name')
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -81,7 +81,7 @@ router.post('/', adminAuth, async (req, res) => {
 
     await allocation.populate([
       { path: 'student', select: 'name studentId email' },
-      { path: 'room', select: 'roomNumber floor roomType' },
+  { path: 'room', select: 'roomNumber floor roomType capacity currentOccupancy amenities monthlyRent residents' },
       { path: 'allocatedBy', select: 'name' }
     ]);
 
@@ -140,7 +140,7 @@ router.get('/my-allocation', auth, async (req, res) => {
       student: req.user._id, 
       status: 'active' 
     })
-      .populate('room', 'roomNumber floor roomType amenities monthlyRent residents')
+  .populate('room', 'roomNumber floor roomType amenities monthlyRent residents capacity currentOccupancy')
       .populate('allocatedBy', 'name');
 
     if (!allocation) {

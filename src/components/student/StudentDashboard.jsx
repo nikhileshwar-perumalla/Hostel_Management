@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
-import { Building, Users, Calendar, DollarSign, Phone, Mail, MapPin, Wifi, AirVent, Bed } from 'lucide-react';
+import { Building, Users, Calendar, DollarSign, Phone, Mail, MapPin, Wifi, AirVent, Bed, Send, Clock, XCircle, CheckCircle } from 'lucide-react';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -9,15 +9,22 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [availableRooms, setAvailableRooms] = useState([]);
   const [showRooms, setShowRooms] = useState(false);
+  const [myRequests, setMyRequests] = useState([]);
+  const [submittingRequestId, setSubmittingRequestId] = useState(null);
+  const [refreshFlag, setRefreshFlag] = useState(0);
 
   useEffect(() => {
     fetchAllocation();
     fetchAvailableRooms();
   }, []);
 
+  useEffect(() => {
+    if (!allocation) fetchMyRequests();
+  }, [allocation, refreshFlag]);
+
   const fetchAllocation = async () => {
     try {
-  const response = await axios.get('/api/allocations/my-allocation');
+      const response = await axios.get('/api/allocations/my-allocation');
       setAllocation(response.data);
     } catch (error) {
       if (error.response?.status !== 404) {
@@ -30,11 +37,36 @@ const StudentDashboard = () => {
 
   const fetchAvailableRooms = async () => {
     try {
-  const response = await axios.get('/api/rooms?available=true&limit=50');
+      const response = await axios.get('/api/rooms?available=true&limit=50');
       setAvailableRooms(response.data.rooms);
     } catch (error) {
       console.error('Error fetching available rooms:', error);
     }
+  };
+
+  const fetchMyRequests = async () => {
+    try {
+      const res = await axios.get('/api/room-requests/mine');
+      setMyRequests(res.data || []);
+    } catch (e) {
+      console.error('Error fetching your room requests', e);
+    }
+  };
+
+  const submitRoomRequest = async (roomId) => {
+    setSubmittingRequestId(roomId);
+    try {
+      await axios.post('/api/room-requests', { roomId });
+      setRefreshFlag(f => f + 1);
+    } catch (e) {
+      alert(e.response?.data?.message || 'Failed to submit request');
+    } finally {
+      setSubmittingRequestId(null);
+    }
+  };
+
+  const hasPendingRequestForRoom = (roomId) => {
+    return myRequests.some(r => r.room?._id === roomId && r.status === 'pending');
   };
 
   const getAmenityIcon = (amenity) => {
@@ -198,7 +230,7 @@ const StudentDashboard = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">No Room Allocated</h2>
             <p className="text-gray-600 mb-6">
-              You don't have a room assigned yet. Please contact the admin for room allocation.
+              You don't have a room assigned yet. You can request a room from the available rooms list below.
             </p>
             <button
               onClick={() => setShowRooms(!showRooms)}
@@ -207,6 +239,37 @@ const StudentDashboard = () => {
               {showRooms ? 'Hide Available Rooms' : 'View Available Rooms'}
             </button>
           </div>
+
+          {/* Your Requests */}
+          {myRequests.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Clock className="h-6 w-6 text-blue-600" /> Your Room Requests
+              </h2>
+              <div className="space-y-3">
+                {myRequests.map(req => (
+                  <div key={req._id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-gray-50">
+                    <div className="flex flex-col text-sm">
+                      <span className="font-semibold text-gray-800">Room {req.room?.roomNumber}</span>
+                      <span className="text-gray-500">Floor {req.room?.floor} • {req.room?.roomType}</span>
+                      <span className="text-xs text-gray-400">{new Date(req.createdAt).toLocaleString()}</span>
+                    </div>
+                    <div>
+                      {req.status === 'pending' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3" /> Pending</span>
+                      )}
+                      {req.status === 'approved' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-green-100 text-green-800"><CheckCircle className="h-3 w-3" /> Approved</span>
+                      )}
+                      {req.status === 'rejected' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-red-100 text-red-800"><XCircle className="h-3 w-3" /> Rejected</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Available Rooms */}
           {showRooms && (
@@ -219,69 +282,79 @@ const StudentDashboard = () => {
                   </div>
                 ) : (
                   availableRooms.map((room) => (
-                    <div key={room._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          Room {room.roomNumber}
-                        </h3>
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                          Available
-                        </span>
-                      </div>
-
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <div className="flex justify-between">
-                          <span>Floor:</span>
-                          <span className="font-medium">{room.floor}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Type:</span>
-                          <span className="font-medium capitalize">{room.roomType}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Occupancy:</span>
-                          <span className="font-medium">
-                            {room.currentOccupancy}/{room.capacity}
+                    <div key={room._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Room {room.roomNumber}
+                          </h3>
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                            {room.currentOccupancy < room.capacity ? 'Available' : 'Full'}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Rent:</span>
-                          <span className="font-medium text-green-600">
-                            ₹{room.monthlyRent}/month
-                          </span>
-                        </div>
-                      </div>
 
-                      {room.amenities && room.amenities.length > 0 && (
-                        <div className="mt-3">
-                          <div className="flex flex-wrap gap-1">
-                            {room.amenities.slice(0, 3).map((amenity) => (
-                              <span
-                                key={amenity}
-                                className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
-                              >
-                                {getAmenityIcon(amenity)}
-                                <span className="ml-1">{amenity}</span>
-                              </span>
-                            ))}
-                            {room.amenities.length > 3 && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                                +{room.amenities.length - 3} more
-                              </span>
-                            )}
+                        <div className="space-y-2 text-sm text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Floor:</span>
+                            <span className="font-medium">{room.floor}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Type:</span>
+                            <span className="font-medium capitalize">{room.roomType}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Occupancy:</span>
+                            <span className="font-medium">
+                              {room.currentOccupancy}/{room.capacity}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Rent:</span>
+                            <span className="font-medium text-green-600">
+                              ₹{room.monthlyRent}/month
+                            </span>
                           </div>
                         </div>
-                      )}
+
+                        {room.amenities && room.amenities.length > 0 && (
+                          <div className="mt-3">
+                            <div className="flex flex-wrap gap-1">
+                              {room.amenities.slice(0, 3).map((amenity) => (
+                                <span
+                                  key={amenity}
+                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
+                                >
+                                  {getAmenityIcon(amenity)}
+                                  <span className="ml-1">{amenity}</span>
+                                </span>
+                              ))}
+                              {room.amenities.length > 3 && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+                                  +{room.amenities.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        disabled={hasPendingRequestForRoom(room._id) || submittingRequestId === room._id || room.currentOccupancy >= room.capacity}
+                        onClick={() => submitRoomRequest(room._id)}
+                        className={`mt-4 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white transition-colors ${
+                          hasPendingRequestForRoom(room._id) ? 'bg-yellow-500 cursor-not-allowed' : room.currentOccupancy >= room.capacity ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
+                      >
+                        {submittingRequestId === room._id ? 'Submitting...' : hasPendingRequestForRoom(room._id) ? 'Requested' : 'Request Room'}
+                        <Send className="h-4 w-4" />
+                      </button>
                     </div>
                   ))
                 )}
               </div>
-              
               {availableRooms.length > 0 && (
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> To request a room allocation, please contact the hostel administrator. 
-                    Room assignments are subject to availability and approval.
+                    <strong>Note:</strong> Submit a room request. Once approved by admin, it will appear as your room allocation.
                   </p>
                 </div>
               )}
@@ -323,7 +396,6 @@ const StudentDashboard = () => {
             )}
           </div>
         </div>
-        
         {user?.address && (
           <div className="mt-6">
             <label className="block text-sm font-medium text-gray-600 mb-1">Address</label>

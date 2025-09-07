@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const roomRoutes = require('./routes/rooms');
 const allocationRoutes = require('./routes/allocations');
+const roomRequestRoutes = require('./routes/roomRequests');
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/allocations', allocationRoutes);
+app.use('/api/room-requests', roomRequestRoutes);
 
 // Health/landing route (works for API-only deploys)
 app.get('/', (req, res) => {
